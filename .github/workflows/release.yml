@@ -1,0 +1,39 @@
+name: Update auto-update metadata
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Delete Existing Release
+      uses: ame-yu/action-delete-latest-release@v2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create New Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: auto-update
+        release_name: auto-update
+        draft: false
+        prerelease: false
+        body: |
+          This release is used for auto-updates, do not download this.
+    - name: Create meta.json
+      id: create_meta_json
+      run: |
+         $(cat .\.github\meta.json).Replace("%VERSION%", [RegEx]::Matches((cat .\mod.txt), '.*"version".*?"(.+?)".*').groups[1]) > ./meta.json
+    - name: Upload meta.json
+      id: upload_meta_json
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./meta.json
+        asset_name: meta.json
+        asset_content_type: application/json
