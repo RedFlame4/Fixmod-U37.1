@@ -22,6 +22,11 @@ Hooks:PostHook(GroupAIStateBesiege, "init", "promod_init", function(self)
 	self._graph_distance_cache = {}
 end)
 
+function GroupAIStateBesiege:_queue_police_upd_task()
+	self._police_upd_task_queued = true
+	managers.enemy:queue_task("GroupAIStateBesiege._upd_police_activity", GroupAIStateBesiege._upd_police_activity, self, self._t + 2)
+end
+
 -- Causes more problems than it's worth
 --[[function GroupAIStateBesiege:assign_enemy_to_group_ai( unit, team_id )
 	local area = self:get_area_from_nav_seg_id(unit:movement():nav_tracker():nav_segment())
@@ -77,6 +82,7 @@ function GroupAIStateBesiege:_upd_police_activity()
 	self:_queue_police_upd_task()
 end
 
+-- Fix reinforce delay being applied wrongly
 function GroupAIStateBesiege:_begin_reenforce_task(reenforce_area)
 	local new_task = {
 		target_area = reenforce_area,
@@ -105,7 +111,13 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 					local dis_id = spawn_group.nav_seg .. "-" .. target_area.pos_nav_seg -- we cannot presume the opposite is also valid like vanilla as navlinks can cause this to not be the case
 					local my_dis = self._graph_distance_cache[dis_id]
 					if not my_dis then
-						local path = managers.navigation:search_coarse({access_pos = "swat", from_seg = spawn_group.nav_seg, to_seg = target_area.pos_nav_seg, id = dis_id})
+						local path = managers.navigation:search_coarse({
+							access_pos = "swat",
+							from_seg = spawn_group.nav_seg,
+							to_seg = target_area.pos_nav_seg,
+							id = dis_id
+						})
+
 						if path and #path >= 2 then
 							local dis = 0
 							local current = spawn_group.pos
@@ -180,6 +192,133 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 	end
 
 	return best_grp, best_grp_type
+end
+
+function GroupAIStateBesiege:_upd_group_spawning()
+	local spawn_task = self._spawning_groups[1]
+	if not spawn_task then
+		return
+	end
+
+	local nr_units_spawned = 0
+	local produce_data = {
+		name = true,
+		spawn_ai = {}
+	}
+	local group_ai_tweak = tweak_data.group_ai
+	local spawn_points = spawn_task.spawn_group.spawn_pts
+	local function _try_spawn_unit(u_type_name, spawn_entry)
+		if nr_units_spawned >= GroupAIStateBesiege._MAX_SIMULTANEOUS_SPAWNS then
+			return
+		end
+
+		local hopeless = true
+		for _, sp_data in ipairs(spawn_points) do
+			local category = group_ai_tweak.unit_categories[u_type_name]
+			if (sp_data.accessibility == "any" or category.access[sp_data.accessibility]) and (not sp_data.amount or sp_data.amount > 0) then
+				hopeless = false
+				if self._t > sp_data.delay_t then
+					produce_data.name = category.units[math.random(#category.units)]
+
+					local spawned_unit = sp_data.mission_element:produce(produce_data)
+					local u_key = spawned_unit:key()
+					local objective
+					if spawn_task.objective then
+						objective = self.clone_objective(spawn_task.objective)
+					else
+						objective = spawn_task.group.objective.element:get_random_SO(spawned_unit)
+						if not objective then
+							spawned_unit:set_slot(0)
+							return true
+						end
+
+						objective.grp_objective = spawn_task.group.objective
+					end
+
+					local u_data = self._police[u_key]
+					self:set_enemy_assigned(objective.area, u_key)
+
+					if spawn_entry.tactics then
+						u_data.tactics = spawn_entry.tactics
+						u_data.tactics_map = {}
+
+						for _, tactic_name in ipairs(u_data.tactics) do
+							u_data.tactics_map[tactic_name] = true
+						end
+					end
+
+					spawned_unit:brain():set_spawn_entry(spawn_entry, u_data.tactics_map)
+
+					u_data.rank = spawn_entry.rank
+
+					self:_add_group_member(spawn_task.group, u_key)
+
+					if spawned_unit:brain():is_available_for_assignment(objective) then
+						if objective.element then
+							objective.element:clbk_objective_administered(spawned_unit)
+						end
+
+						spawned_unit:brain():set_objective(objective)
+					else
+						spawned_unit:brain():set_followup_objective(objective)
+					end
+
+					nr_units_spawned = nr_units_spawned + 1
+
+					if spawn_task.ai_task then
+						spawn_task.ai_task.force_spawned = spawn_task.ai_task.force_spawned + 1
+					end
+
+					sp_data.delay_t = self._t + sp_data.interval
+
+					if sp_data.amount then
+						sp_data.amount = sp_data.amount - 1
+					end
+
+					return true
+				end
+			end
+		end
+
+		if hopeless then
+			debug_pause("[GroupAIStateBesiege:_upd_group_spawning] spawn group", spawn_task.spawn_group.id, "failed to spawn unit", u_type_name)
+			return true
+		end
+	end
+
+	local complete = true
+	for u_type_name, spawn_info in pairs(spawn_task.units_remaining) do
+		if not group_ai_tweak.unit_categories[u_type_name].access.acrobatic then
+			for i = spawn_info.amount, 1, -1 do
+				if _try_spawn_unit(u_type_name, spawn_info.spawn_entry) then
+					spawn_info.amount = spawn_info.amount - 1
+				else
+					complete = false
+					break
+				end
+			end
+		end
+	end
+
+	for u_type_name, spawn_info in pairs(spawn_task.units_remaining) do
+		for i = spawn_info.amount, 1, -1 do
+			if _try_spawn_unit(u_type_name, spawn_info.spawn_entry) then
+				spawn_info.amount = spawn_info.amount - 1
+			else
+				complete = false
+				break
+			end
+		end
+	end
+
+	if complete then
+		spawn_task.group.has_spawned = true
+		table.remove(self._spawning_groups, 1)
+
+		if spawn_task.group.size <= 0 then
+			self._groups[spawn_task.group.id] = nil
+		end
+	end
 end
 
 function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
