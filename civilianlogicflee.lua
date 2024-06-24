@@ -9,11 +9,11 @@ local mvec3_set_z = mvector3.set_z
 function CivilianLogicFlee._find_hide_cover( data )
 	local my_data = data.internal_data
 	my_data.cover_search_task_key = nil
-	
+
 	if data.unit:anim_data().dont_flee then
 		return
 	end
-	
+
 	local avoid_pos
 	if my_data.avoid_pos then
 		avoid_pos = my_data.avoid_pos
@@ -37,13 +37,13 @@ function CivilianLogicFlee._find_hide_cover( data )
 			mvec3_add( data.m_pos, 100 )
 		end
 	end
-	
+
 	if my_data.best_cover then
 		local best_cover_vec = avoid_pos - my_data.best_cover[1][1]
 		-- Why isn't this done to begin with???
 		mvec3_set_z(best_cover_vec, 0)
 		mvec3_norm(best_cover_vec)
-		
+
 		if mvec3_dot( best_cover_vec, my_data.best_cover[1][2] ) > 0.7 then
 			-- present cover was good enough
 			return
@@ -64,13 +64,13 @@ function CivilianLogicFlee._find_hide_cover( data )
 		local action_data = { type = "act", body_part = 1, variant = "panic", clamp_to_graph = true }
 		data.unit:brain():action_request( action_data )
 		data.unit:sound():say( "a02x_any", true )
-		
+
 		if data.unit:unit_data().mission_element then
 			data.unit:unit_data().mission_element:event( "panic", data.unit )
 		end
-		
+
 		CopLogicBase._reset_attention( data )
-		
+
 		if not managers.groupai:state():enemy_weapons_hot() then
 			local alert = { "vo_distress", data.unit:movement():m_head_pos(), 200, data.SO_access, data.unit }
 			managers.groupai:state():propagate_alert( alert )

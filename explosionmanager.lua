@@ -10,12 +10,12 @@ function ExplosionManager:detect_and_give_dmg( params )
 	local col_ray = params.col_ray
 	local alert_filter = params.alert_filter or managers.groupai:state():get_unit_type_filter( "civilians_enemies" )
 	local owner = params.owner
-		
+
 	local player = managers.player:player_unit()
 	if alive( player ) and player_dmg ~= 0 then
 		player:character_damage():damage_explosion( { position = hit_pos, range = range, damage = player_dmg } )
 	end
-	
+
 	local bodies = (ignore_unit or World):find_bodies("intersect", "sphere", hit_pos, range, slotmask)
 	local alert_unit = user_unit
 	if alert_unit and alert_unit:base() and alert_unit:base().thrower_unit then
@@ -33,7 +33,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 		Vector3( 0, 0, range ),
 		Vector3( 0, 0,-range )
 	}
-	
+
 	local pos = Vector3()
 	for _, dir in ipairs( dirs ) do
 		mvector3.set( pos, dir )
@@ -49,7 +49,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 		if splinter_ray then
 			pos = splinter_ray.position - dir:normalized() * math.min(splinter_ray.distance, 10)
 		end
-		
+
 		local near_splinter = false
 		for _, s_pos in ipairs( splinters ) do
 			if mvector3.distance_sq( pos, s_pos ) < 900 then
@@ -57,7 +57,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 				break
 			end
 		end
-		
+
 		if not near_splinter then
 			table.insert( splinters, mvector3.copy( pos ) )
 		end
@@ -95,16 +95,16 @@ function ExplosionManager:detect_and_give_dmg( params )
 						end
 					end
 				end
-				
+
 				if ray_hit then
 					local hit_unit = hit_body:unit()
 					if hit_unit:base() and hit_unit:base()._tweak_table and not hit_unit:character_damage():dead() then
 						type = hit_unit:base()._tweak_table
-						if type == "civilian" or type == "civilian_female" or type == "bank_manager" then
+						if CopDamage.is_civilian(type) then
 							count_civilians = count_civilians + 1
-						elseif type == "gangster" then
+						elseif CopDamage.is_gangster(type) then
 							count_gangsters = count_gangsters + 1
-						elseif type == "russian" or type == "german" or type == "spanish" or type == "american" then
+						elseif table.contains(CriminalsManager.character_names(), type) then
 						else
 							count_cops = count_cops + 1
 						end
@@ -123,9 +123,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 				if apply_body_dmg then
 					self:_apply_body_damage( true, hit_body, user_unit, dir, damage )
 				end
-				
+
 				damage = math.max( damage, 1 ) -- under 1 damage is generally not allowed
-				
+
 				if apply_char_dmg then
 					characters_hit[hit_unit_key] = true
 
@@ -137,7 +137,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 						weapon_unit = owner,
 						col_ray = self._col_ray or { position = hit_body:position(), ray = dir }
 					}
-					
+
 					hit_unit:character_damage():damage_explosion( action_data )
 
 					if not dead_before and hit_unit:base() and hit_unit:base()._tweak_table and hit_unit:character_damage():dead() then
@@ -155,9 +155,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 			end
 		end
 	end
-	
+
 	managers.explosion:units_to_push( units_to_push, hit_pos, range )
-	
+
 	if owner then
 		managers.statistics:shot_fired({hit = false, weapon_unit = owner})
 		for i = 1, count_gangsters + count_cops do
@@ -180,19 +180,18 @@ function ExplosionManager:detect_and_give_dmg( params )
 			end
 		end
 	end
-	
+
 	return hit_units, splinters
 end
 
 function ExplosionManager:client_damage_and_push( position, normal, user_unit, dmg, range, curve_pow )
 	local bodies = World:find_bodies( "intersect", "sphere", position, range, managers.slot:get_mask( "explosion_targets" ) )
-	
+
 	local units_to_push = {}
 	for _, hit_body in ipairs( bodies ) do
 		local hit_unit = hit_body:unit()
 		units_to_push[ hit_body:unit():key() ] = hit_unit
-		
-		
+
 		local apply_dmg = hit_body:extension() and hit_body:extension().damage and hit_unit:id() == -1
 		local dir, len, damage
 		if apply_dmg then
@@ -202,6 +201,6 @@ function ExplosionManager:client_damage_and_push( position, normal, user_unit, d
 			self:_apply_body_damage( false, hit_body, user_unit, dir, damage )
 		end
 	end
-	
+
 	self:units_to_push( units_to_push, position, range )
 end

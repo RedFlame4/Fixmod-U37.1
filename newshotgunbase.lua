@@ -24,14 +24,14 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 	local function hit_enemy(col_ray)
 		-- hitting a body that gets damaged separate to the main unit should receive per pellet damage
 		local unit = col_ray.unit
-		if unit:character_damage() and (not unit:damage() or not col_ray.body:extension() or not col_ray.body:extension().damage) then
+		if unit:character_damage() then
 			local enemy_key = unit:key()
 			if not hit_enemies[ enemy_key ] or unit:character_damage().is_head and unit:character_damage():is_head( col_ray.body ) then
 				hit_enemies[ enemy_key ] = col_ray
 			end
 		else
 			-- per-pellet damage, as to prevent the shotgun from exceeding it's base damage since it can hit the same unit more than once
-			InstantBulletBase:on_collision( col_ray, self._unit, user_unit, self:get_damage_falloff(pellet_damage, col_ray, user_unit) )
+			self._bullet_class:on_collision( col_ray, self._unit, user_unit, self:get_damage_falloff(pellet_damage, col_ray, user_unit) )
 		end
 	end
 
@@ -89,7 +89,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 	for _, col_ray in pairs( hit_enemies ) do
 		local damage = self:get_damage_falloff(damage, col_ray, user_unit)
 		if damage > 0 then
-			local result = InstantBulletBase:on_collision( col_ray, self._unit, user_unit, damage )
+			local result = self._bullet_class:on_collision( col_ray, self._unit, user_unit, damage )
 			if result and result.type == "death" then
 				managers.game_play_central:do_shotgun_push(col_ray.unit, col_ray.position, col_ray.ray, col_ray.distance)
 			end

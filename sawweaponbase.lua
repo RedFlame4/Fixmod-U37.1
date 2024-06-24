@@ -4,7 +4,7 @@ function SawHit:on_collision( col_ray, weapon_unit, user_unit, damage )
 	if hit_unit:base() and hit_unit:base()._tweak_table == "tank" then -- has_tag isn't a thing yet, so check _tweak_table
 		damage = 50 -- damage * 20
 	end
-	
+
 	local result = InstantBulletBase.on_collision( self, col_ray, weapon_unit, user_unit, damage )
 	if hit_unit:damage() and col_ray.body:extension() and col_ray.body:extension().damage then
 		damage = math.clamp( damage * managers.player:upgrade_value( "saw", "lock_damage_multiplier", 1 ) * 4, 0, 200 )
@@ -14,6 +14,6 @@ function SawHit:on_collision( col_ray, weapon_unit, user_unit, damage )
 			managers.network:session():send_to_peers_synched( "sync_body_damage_lock", col_ray.body, damage )
 		end
 	end
-	
+
 	return result
 end

@@ -14,7 +14,7 @@ Hooks:PostHook(WeaponTweakData, "init", "promod_init", function(self)
 	-- NPC S552
 	self.s552_npc.muzzleflash_silenced = "effects/payday2/particles/weapons/9mm_auto_silence" -- chunky suppressor
 	self.s552_npc.has_suppressor = "suppressed_c" -- chunky suppressor
-	
+
 	-- PLAYER SAW
 	self.saw.sounds.dryfire = nil -- makes no sense for it to play a dryfire sound
 end)

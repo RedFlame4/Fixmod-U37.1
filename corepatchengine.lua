@@ -6,6 +6,6 @@ function mvector3.random_orthogonal(vec1, vec2)
 	if vec2 then
 		mvec3_set(vec1, vec2)
 	end
-	
+
 	return random_orthogonal_orig(vec1) -- tailcall
 end

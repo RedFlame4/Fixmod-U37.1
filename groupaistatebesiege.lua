@@ -136,10 +136,10 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 		--print( "no distances", inspect( valid_spawn_groups ), inspect( valid_spawn_group_distances ) )
 		return
 	end
-	
+
 	local total_weight = 0
 	local candidate_groups = {}
-	
+
 	-- calculate unnormalized weights
 	local dis_limit = 10000 * 10000 -- minimum weight at 100m
 	for i, dis in ipairs( valid_spawn_group_distances ) do
@@ -161,11 +161,11 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 			end
 		end
 	end
-	
+
 	if total_weight == 0 then
 		return
 	end
-	
+
 	local rand_wgt = total_weight * math.random()
 	--print( "\nrand_wgt", rand_wgt )
 	local best_grp, best_grp_type
@@ -178,7 +178,7 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 			break
 		end
 	end
-	
+
 	return best_grp, best_grp_type
 end
 
