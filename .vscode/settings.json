@@ -1,0 +1,10 @@
+{
+    "Lua.diagnostics.disable": [
+        "duplicate-set-field",
+        "unbalanced-assignments"
+    ],
+    "Lua.diagnostics.globals": [
+        "SoundDevice",
+        "PackageManager"
+    ]
+}
