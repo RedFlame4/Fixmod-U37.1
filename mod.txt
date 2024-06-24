@@ -3,7 +3,7 @@
 	"description" : "Various fixes for issues in U37.1",
 	"author" : "RedFlame",
 	"contact" : "Discord: RedFlame3870",
-	"version" : "1.1",
+	"version" : "1",
 	"priority" : 1000,
 	"hooks" : [
 		{"hook_id" : "core/lib/system/corepatchengine", "script_path" : "corepatchengine.lua"},
@@ -52,5 +52,13 @@
 		{"hook_id" : "lib/units/weapons/npcraycastweaponbase", "script_path" : "npcraycastweaponbase.lua"},
 		{"hook_id" : "lib/units/weapons/raycastweaponbase", "script_path" : "raycastweaponbase.lua"},
 		{"hook_id" : "lib/units/weapons/sawweaponbase", "script_path" : "sawweaponbase.lua"}
+	],
+	"updates" : [
+		"identifier" : "fixmod-u37.1",
+		"host": {
+			"meta": "https://github.com/RedFlame4/Fixmod-U37.1/releases/download/auto-update/meta.json",
+			"download": "https://github.com/RedFlame4/Fixmod-U37.1/archive/refs/heads/main.zip",
+			"patchnotes": "https://github.com/RedFlame4/Fixmod-U37.1/commits/main/"
+		}
 	]
 }
