@@ -5,6 +5,7 @@
     ],
     "Lua.diagnostics.globals": [
         "SoundDevice",
-        "PackageManager"
+        "PackageManager",
+        "TextureCache"
     ]
 }
