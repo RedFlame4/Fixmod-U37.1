@@ -49,3 +49,25 @@ function CopLogicIdle.on_alert( data, alert_data )
 		end
 	end
 end
+
+function CopLogicIdle.clbk_action_timeout(ignore_this, data)
+	local my_data = data.internal_data
+
+	CopLogicBase.on_delayed_clbk(my_data, my_data.action_timeout_clbk_id)
+
+	my_data.action_timeout_clbk_id = nil
+
+	if not data.objective then
+		debug_pause_unit(data.unit, "[CopLogicIdle.clbk_action_timeout] missing objective")
+
+		return
+	end
+
+	my_data.action_expired = true
+
+	if data.unit:anim_data().act and data.unit:anim_data().needs_idle and not data.unit:anim_data().to_idle then
+		CopLogicIdle._start_idle_action_from_act(data)
+	end
+
+	managers.groupai:state():on_objective_complete(data.unit, data.objective)
+end

@@ -34,17 +34,16 @@ end
 	group.team = self._teams[team_id]
 
 	local objective = unit:brain():objective()
-	local grp_obj_type = self._task_data.assault.active and "assault_area" or "recon_area"
 	local grp_objective
 	if objective then
 		grp_objective = {
-			type = grp_obj_type,
+			type = "custom",
 			area = objective.area or objective.nav_seg and self:get_area_from_nav_seg_id(objective.nav_seg) or area
 		}
 		objective.grp_objective = grp_objective
 	else
 		grp_objective = {
-			type = grp_obj_type,
+			type = "custom",
 			area = area
 		}
 	end

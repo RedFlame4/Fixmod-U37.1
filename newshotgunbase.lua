@@ -1,3 +1,4 @@
+-- fix range being set incorrectly, reducing suppression and autohit range
 Hooks:PostHook(NewShotgunBase, "init", "promod_init", function(self)
 	self._range = self._damage_near + self._damage_far -- the max distance before damage hits zero is actually damage_near + damage_far for some reason
 end)
@@ -22,7 +23,6 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 	local autoaim, dodge_enemies = self:check_autoaim( from_pos, direction, self._range )
 	local weight = 0.1
 	local function hit_enemy(col_ray)
-		-- hitting a body that gets damaged separate to the main unit should receive per pellet damage
 		local unit = col_ray.unit
 		if unit:character_damage() then
 			local enemy_key = unit:key()
@@ -98,7 +98,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 
 	if dodge_enemies and self._suppression then
 		for enemy_data, dis_error in pairs( dodge_enemies ) do
-			if not enemy_data.unit:movement():cool() then -- cannot suppress ppl who have no idea that there is combat
+			if not enemy_data.unit:movement():cool() then -- fix suppression with shotguns in stealth
 				enemy_data.unit:character_damage():build_suppression( suppr_mul * dis_error * self._suppression )
 			end
 		end

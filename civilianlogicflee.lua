@@ -31,10 +31,12 @@ function CivilianLogicFlee._find_hide_cover( data )
 		if closest_crim then
 			avoid_pos = closest_crim.m_pos
 		else
+			-- not sure this path ever executed, but fix it anyway
 			avoid_pos = Vector3()
+
 			mvec3_rand_orthogonal( avoid_pos, math.UP )
 			mvec3_mul( avoid_pos, 100 )
-			mvec3_add( data.m_pos, 100 )
+			mvec3_add( avoid_pos, data.m_pos )
 		end
 	end
 

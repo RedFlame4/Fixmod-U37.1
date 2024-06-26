@@ -1,8 +1,6 @@
-function TeamAIMovement:on_SPOOCed( enemy_unit )
-	self._unit:character_damage():on_incapacitated()
-
+Hooks:PostHook(TeamAIMovement, "on_SPOOCed", "fixmod_on_SPOOCed", function()
 	return true
-end
+end)
 
 function TeamAIMovement:pre_destroy()
 	TeamAIMovement.super.pre_destroy(self)
