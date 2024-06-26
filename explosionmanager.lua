@@ -82,7 +82,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 
 		units_to_push[hit_unit_key] = hit_unit
 
-		if apply_char_dmg or apply_body_dmg then -- unit is a character and can take explosion damage, or one of it's bodies can
+		-- unit is a character and can take explosion damage, or one of it's bodies can, or it's a bag that can explode
+		-- bags previously required a dynamic() check on the body which catches tons of other unneeded things
+		if apply_char_dmg or apply_body_dmg or hit_unit:carry_data() and hit_unit:carry_data():can_explode() then
 			local ray_hit = false
 			if char_dmg_ext then
 				if params.no_raycast_check_characters then
