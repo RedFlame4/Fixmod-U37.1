@@ -369,7 +369,7 @@ local diagonals = {
 function CopActionWalk._apply_padding_to_simplified_path(path)
 	local offset = tmp_vec1
 	local to_pos = tmp_vec2
-	
+
 	for i = 2, #path - 1 do
 		local pos = path[i]
 		if pos.x then -- current is not a navlink, we can apply padding
@@ -994,7 +994,7 @@ function CopActionWalk._calculate_simplified_path(path, nr_iterations, z_test, a
 	if #path <= 2 then
 		return
 	end
-	
+
 	-- Iterate over the path instead of creating a new one
 	local i = 2
 	local prev_nav_point = path[1]

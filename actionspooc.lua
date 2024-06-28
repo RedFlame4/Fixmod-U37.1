@@ -16,7 +16,20 @@ local function mvec3_dis_no_z(a, b)
 	return mvec3_dis(a, tmp_vec1)
 end
 
-Hooks:PostHook(ActionSpooc, "init", "fixmod_init", function(self, action_desc, common_data)
+Hooks:PreHook(ActionSpooc, "init", "fixmod_init", function(self, action_desc, common_data)
+	if not self._ext_anim.pose then
+		debug_pause_unit(self._unit, "[CopActionWalk:init] no pose in anim", self._machine:segment_state(idstr_base), self._unit)
+
+		local res = self._ext_movement:play_redirect("idle")
+		if not self._ext_anim.pose then
+			print("[CopActionWalk:init] failed restoring pose with anim", self._machine:segment_state(idstr_base), res)
+
+			if not self._ext_movement:play_state("std/stand/still/idle/look") then
+				return debug_pause()
+			end
+		end
+	end
+
 	if not action_desc.flying_strike and common_data.ext_anim.pose ~= "stand" then
 		-- TODO: this shouldn't happen to begin with unless the unit is in a different pose between host and client
 		common_data.ext_movement:play_redirect("stand")
