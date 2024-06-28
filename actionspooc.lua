@@ -31,7 +31,6 @@ Hooks:PreHook(ActionSpooc, "init", "fixmod_init", function(self, action_desc, co
 	end
 
 	if not action_desc.flying_strike and common_data.ext_anim.pose ~= "stand" then
-		-- TODO: this shouldn't happen to begin with unless the unit is in a different pose between host and client
 		common_data.ext_movement:play_redirect("stand")
 	end
 end)
