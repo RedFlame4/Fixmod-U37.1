@@ -6,10 +6,10 @@ function UnitNetworkHandler:action_aim_state(unit, state)
 
     if state then
         unit:movement():action_request({
-			block_type = "action",
-			body_part = 3,
-			type = "shoot"
-		})
+            block_type = "action",
+            body_part = 3,
+            type = "shoot"
+        })
     else
         unit:movement():sync_action_aim_end()
     end
