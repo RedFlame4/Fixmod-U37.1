@@ -1,3 +1,5 @@
+local idstr_base = Idstring("base")
+
 local mvec3_dis = mvector3.distance
 local mvec3_set = mvector3.set
 local mvec3_set_z = mvector3.set_z
@@ -14,8 +16,15 @@ local function mvec3_dis_no_z(a, b)
 	return mvec3_dis(a, tmp_vec1)
 end
 
+Hooks:PostHook(ActionSpooc, "init", "fixmod_init", function(self, action_desc, common_data)
+	if not action_desc.flying_strike and common_data.ext_anim.pose ~= "stand" then
+		-- TODO: this shouldn't happen to begin with unless the unit is in a different pose between host and client
+		common_data.ext_movement:play_redirect("stand")
+	end
+end)
+
 function ActionSpooc:complete()
-	return self._beating_end_t and self._beating_end_t < TimerManager:game():time() and (not self:is_flying_strike() or self._last_vel_z >= 0)
+	return self._beating_end_t and TimerManager:game():time() > self._beating_end_t and (not self:is_flying_strike() or self._last_vel_z >= 0)
 end
 
 function ActionSpooc:_get_current_max_walk_speed(move_dir)
