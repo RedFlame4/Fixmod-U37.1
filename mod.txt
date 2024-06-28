@@ -7,6 +7,7 @@
 	"priority" : 1000,
 	"hooks" : [
 		{"hook_id" : "core/lib/system/corepatchengine", "script_path" : "corepatchengine.lua"},
+		{"hook_id" : "lib/managers/dlcmanager", "script_path" : "dlcmanager.lua"},
 		{"hook_id" : "lib/managers/dynamicresourcemanager", "script_path" : "dynamicresourcemanager.lua"},
 		{"hook_id" : "lib/managers/explosionmanager", "script_path" : "explosionmanager.lua"},
 		{"hook_id" : "lib/managers/hudmanager", "script_path" : "hudmanager.lua"},
@@ -18,7 +19,6 @@
 		{"hook_id" : "lib/states/missionendstate", "script_path": "missionendstate.lua"},
 		{"hook_id" : "lib/tweak_data/attentiontweakdata", "script_path": "attentiontweakdata.lua"},
 		{"hook_id" : "lib/tweak_data/charactertweakdata", "script_path": "charactertweakdata.lua"},
-		{"hook_id" : "lib/tweak_data/dlctweakdata", "script_path": "dlctweakdata.lua"},
 		{"hook_id" : "lib/tweak_data/groupaitweakdata", "script_path": "groupaitweakdata.lua"},
 		{"hook_id" : "lib/tweak_data/weapontweakdata", "script_path": "weapontweakdata.lua"},
 		{"hook_id" : "lib/units/beings/player/states/playercarry", "script_path" : "playercarry.lua"},
