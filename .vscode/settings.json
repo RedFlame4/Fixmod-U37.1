@@ -1,11 +1,17 @@
 {
     "Lua.diagnostics.disable": [
         "duplicate-set-field",
-        "unbalanced-assignments"
+        "unbalanced-assignments",
+        "need-check-nil",
+        "undefined-field",
+        "param-type-mismatch"
     ],
     "Lua.diagnostics.globals": [
         "SoundDevice",
         "PackageManager",
         "TextureCache"
-    ]
+    ],
+    "files.associations": {
+        "mod.txt": "json",
+    }
 }
