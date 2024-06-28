@@ -3,7 +3,7 @@
 	"description" : "Various fixes for issues in U37.1",
 	"author" : "RedFlame",
 	"contact" : "Discord: RedFlame3870",
-	"version" : "1.1",
+	"version" : "1.2",
 	"priority" : 1000,
 	"hooks" : [
 		{"hook_id" : "core/lib/system/corepatchengine", "script_path" : "corepatchengine.lua"},
@@ -37,6 +37,7 @@
 		{"hook_id" : "lib/units/enemies/cop/logics/coplogicidle", "script_path" : "coplogicidle.lua"},
 		{"hook_id" : "lib/units/enemies/cop/logics/coplogicsniper", "script_path" : "coplogicsniper.lua"},
 		{"hook_id" : "lib/units/enemies/cop/copbrain", "script_path": "copbrain.lua"},
+		{"hook_id" : "lib/units/enemies/cop/copdamage", "script_path": "copdamage.lua"},
 		{"hook_id" : "lib/units/enemies/cop/copmovement", "script_path": "copmovement.lua"},
 		{"hook_id" : "lib/units/enemies/spooc/actions/lower_body/actionspooc", "script_path" : "actionspooc.lua"},
 		{"hook_id" : "lib/units/enemies/spooc/logics/spooclogicidle", "script_path" : "spooclogicidle.lua"},
