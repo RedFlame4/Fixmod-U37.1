@@ -17,7 +17,10 @@ local function mvec3_dis_no_z(a, b)
 end
 
 Hooks:PreHook(ActionSpooc, "init", "fixmod_init", function(self, action_desc, common_data)
+	self._ext_movement = common_data.ext_movement
 	self._ext_anim = common_data.ext_anim
+	self._machine = common_data.machine
+	self._unit = common_data.unit
 
 	if not self._ext_anim.pose then
 		debug_pause_unit(self._unit, "[CopActionWalk:init] no pose in anim", self._machine:segment_state(idstr_base), self._unit)

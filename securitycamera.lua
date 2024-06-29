@@ -3,9 +3,9 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 	local my_key = self._u_key
 	local my_pos = self._pos
 	local my_fwd = self._look_fwd
-	
+
 	local det_delay = self._detection_delay
-	
+
 	for u_key, attention_info in pairs( detected_obj ) do
 		if attention_info.next_verify_t > t then
 		else
@@ -21,10 +21,10 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 						noticable = true
 					end
 				end
-				
+
 				local delta_prog
 				local dt = t - attention_info.prev_notice_chk_t
-				
+
 				if noticable then
 					--print( "\nnoticeable" )
 					if angle == -1 then -- instant detection
@@ -35,11 +35,11 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 						local angle_mul_mod = 0.15 * math.min( angle / self._cone_angle, 1 ) -- angle only plays 25% role
 						local dis_mul_mod = 0.85 * dis_multiplier
 						local notice_delay_mul = (attention_info.settings.notice_delay_mul or 1)
-						
+
 						if attention_info.settings.detection and attention_info.settings.detection.delay_mul then
 							notice_delay_mul = notice_delay_mul * attention_info.settings.detection.delay_mul
 						end
-						
+
 						local notice_delay_modified = math.lerp( min_delay * notice_delay_mul, max_delay, dis_mul_mod + angle_mul_mod )
 						delta_prog = notice_delay_modified > 0 and dt / notice_delay_modified or 1
 						--[[if attention_info.unit == managers.player:player_unit() then
@@ -50,7 +50,7 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 					delta_prog = det_delay[2] > 0 and -dt / det_delay[2] or -1
 					--print( "non-noticeable delta_prog", delta_prog )
 				end
-				
+
 				attention_info.notice_progress = attention_info.notice_progress + delta_prog
 				--print( "notice_progress", attention_info.notice_progress, self._unit, attention_info.unit )
 				if attention_info.notice_progress > 1 then
@@ -81,7 +81,7 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 					attention_info.settings.notice_clbk( self._unit, noticable )
 				end
 			end
-			
+
 			if attention_info.identified then
 				--print( "checking verification\n", inspect( attention_info ) )
 				attention_info.nearly_visible = nil
@@ -101,7 +101,7 @@ function SecurityCamera:_upd_detect_attention_objects( t )
 
 				attention_info.verified = verified
 				attention_info.dis = dis
-				
+
 				if verified then
 					attention_info.release_t = nil
 					attention_info.verified_t = t

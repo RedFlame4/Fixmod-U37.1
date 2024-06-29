@@ -58,7 +58,7 @@ function PlayerStandard:_upd_nav_data()
 end
 
 Hooks:PostHook(PlayerStandard, "_calculate_standard_variables", "promod_calculate_standard_variables", function(self)
-    self._cam_fwd_flat = Rotation(self._camera_unit:rotation():yaw(), 0, 0):y()
+    self._cam_fwd_flat = Rotation(self._camera_unit:rotation():yaw(), 0, 0):y() -- fixes wonky movement when carrying a bag and not looking straight ahead
 end)
 
 Hooks:PostHook(PlayerStandard, "_interupt_action_reload", "promod_interupt_action_reload", function(self)
