@@ -5,9 +5,12 @@ local mvec3_norm = mvector3.normalize
 local mvec3_set = mvector3.set
 local mvec3_sub = mvector3.subtract
 
-Hooks:PostHook(PlayerStandard, "exit", "promod_exit", function(self, state_data, new_state_name)
-	if mvec3_dis_sq(self._pos, self._last_sent_pos) > 1 and self._unit:movement():current_state_name() == "standard" and (new_state_name == "arrested" or new_state_name == "bleed_out" or new_state_name == "fatal" or new_state_name == "incapacitated" or new_state_name == "tased") then
+Hooks:PreHook(PlayerStandard, "exit", "promod_exit", function(self, state_data, new_state_name)
+	if mvec3_dis_sq(self._pos, self._last_sent_pos) > 1 and new_state_name ~= "standard" and new_state_name ~= "carry" and new_state_name ~= "mask_off" and new_state_name ~= "clean" then
 		self._ext_network:send("action_walk_nav_point", self._pos) -- sync our exact position
+
+		mvec3_set(self._last_sent_pos, self._pos)
+		self._last_sent_pos_t = managers.player:player_timer():time()
 	end
 end)
 
