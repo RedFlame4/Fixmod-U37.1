@@ -8,8 +8,6 @@ local _presets_orig = CharacterTweakData._presets
 function CharacterTweakData:_presets(...)
 	local presets = _presets_orig(self, ...)
 
-	presets.weapon.sniper.m4.melee_retry_delay = presets.weapon.normal.m4.melee_retry_delay -- nice one overkill, not that it matters
-
 	self:_process_weapon_usage_table(presets.weapon.deathwish) -- not normalised otherwise
 
 	presets.enemy_chatter.swat.flash_grenade = true -- this line is fully implemented but never plays cause no enemies have this chatter set
@@ -17,8 +15,25 @@ function CharacterTweakData:_presets(...)
 	return presets
 end
 
+Hooks:PostHook(CharacterTweakData, "_set_normal", "fixmod_set_normal", function(self)
+	self:_process_weapon_usage_table(self.hector_boss.weapon) -- not normalised otherwise
+end)
+
+Hooks:PostHook(CharacterTweakData, "_set_hard", "fixmod_set_hard", function(self)
+	self:_process_weapon_usage_table(self.hector_boss.weapon) -- not normalised otherwise
+end)
+
+Hooks:PostHook(CharacterTweakData, "_set_overkill", "fixmod_set_overkill", function(self)
+	self:_process_weapon_usage_table(self.hector_boss.weapon) -- not normalised otherwise
+end)
+
+Hooks:PostHook(CharacterTweakData, "_set_overkill_145", "fixmod_set_overkill_145", function(self)
+   self:_process_weapon_usage_table(self.hector_boss.weapon) -- not normalised otherwise
+end)
+
 Hooks:PostHook(CharacterTweakData, "_set_overkill_290", "fixmod_set_overkill_290", function(self)
 	 -- none of these are normalised
+	self:_process_weapon_usage_table(self.hector_boss.weapon)
 	self:_process_weapon_usage_table(self.tank.weapon)
 	self:_process_weapon_usage_table(self.shield.weapon)
 	self:_process_weapon_usage_table(self.taser.weapon)
