@@ -214,10 +214,10 @@ function GroupAIStateBesiege:_upd_group_spawning()
 		local hopeless = true
 		for _, sp_data in ipairs(spawn_points) do
 			local category = group_ai_tweak.unit_categories[u_type_name]
-			if (sp_data.accessibility == "any" or category.access[sp_data.accessibility]) and (not sp_data.amount or sp_data.amount > 0) then
+			if (sp_data.accessibility == "any" or category.access[sp_data.accessibility]) and (not sp_data.amount or sp_data.amount > 0) and sp_data.mission_element:enabled() then
 				hopeless = false
 				if self._t > sp_data.delay_t then
-					produce_data.name = category.units[math.random(#category.units)]
+					produce_data.name = table.random(category.units)
 
 					local spawned_unit = sp_data.mission_element:produce(produce_data)
 					local u_key = spawned_unit:key()
@@ -489,8 +489,6 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 								verify_clbk = callback(self, self, "is_nav_seg_safe"),
 							})
 							if new_alternate_assault_path then
-								self:_merge_coarse_path_by_area(new_alternate_assault_path)
-
 								alternate_assault_path = new_alternate_assault_path
 								alternate_assault_area = search_area
 								alternate_assault_area_from = assault_from_area
@@ -511,8 +509,6 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 					})
 
 					if assault_path then
-						self:_merge_coarse_path_by_area(assault_path)
-
 						assault_area = search_area
 
 						break
@@ -535,19 +531,26 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 			assault_path = alternate_assault_path
 		end
 
-		if assault_area then
+		if assault_area and assault_path then
+			self:_merge_coarse_path_by_area(assault_path)
+
 			local used_grenade = nil
 			if push then
-				local detonate_pos = {}
+				local detonate_pos
 				if charge then
+					local criminal_positions = {}
 					for c_key, c_data in pairs(assault_area.criminal.units) do
-						table_insert(detonate_pos, c_data.unit:movement():m_pos())
+						if not self._criminals[c_key].is_deployable then
+							table_insert(criminal_positions, c_data.unit:movement():m_pos())
+						end
 					end
+
+					detonate_pos = table.random(criminal_positions)
 				end
 
 				local first_chk = math_random() < 0.5 and self._chk_group_use_flash_grenade or self._chk_group_use_smoke_grenade
 				local second_chk = first_chk == self._chk_group_use_flash_grenade and self._chk_group_use_smoke_grenade or self._chk_group_use_flash_grenade
-				used_grenade = first_chk(self, group, self._task_data.assault, table.random(detonate_pos)) or second_chk(self, group, self._task_data.assault, table.random(detonate_pos))
+				used_grenade = first_chk(self, group, self._task_data.assault, detonate_pos) or second_chk(self, group, self._task_data.assault, detonate_pos)
 
 				self:_voice_move_in_start(group)
 			else
@@ -639,7 +642,8 @@ function GroupAIStateBesiege:_chk_group_use_smoke_grenade( group, task_data, det
 					local nav_seg_id = u_data.tracker:nav_segment()
 					local nav_seg = managers.navigation._nav_segments[ nav_seg_id ]
 					for neighbour_nav_seg_id, door_list in pairs( nav_seg.neighbours ) do -- iterate through the neighbour nav_segments of the cop
-						if task_data.target_areas[1].nav_segs[ neighbour_nav_seg_id ] then -- it has our primary target area as neighbour
+						local area = self:get_area_from_nav_seg_id(neighbour_nav_seg_id)
+						if task_data.target_areas[1].nav_segs[ neighbour_nav_seg_id ] or next(area.criminal.units) then -- it has our primary target area as neighbour
 							local random_door_id = door_list[ math.random( #door_list ) ]
 							if type( random_door_id ) == "number" then
 								detonate_pos = managers.navigation._room_doors[ random_door_id ].center

@@ -27,10 +27,6 @@ Hooks:PostHook(GroupAIStateBase, "on_enemy_unregistered", "REAI_on_enemy_unregis
 	end
 end)
 
-function GroupAIStateBase:num_alive_players()
-	return table.size(self._player_criminals)
-end
-
 -- Fix team AI spamming combat chatter
 function GroupAIStateBase:chk_say_teamAI_combat_chatter(unit)
     if not self:is_detection_persistent() then

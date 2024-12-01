@@ -30,7 +30,7 @@ function RaycastWeaponBase:_check_alert(rays, fire_pos, direction, user_unit)
 	local tolerance = 500 * 500
 
 	mvec3_set(from_pos, direction)
-	mvec3_mul(from_pos, -alert_rad) 
+	mvec3_mul(from_pos, -alert_rad)
 	mvec3_add(from_pos, fire_pos)
 
 	for i = #all_alerts, 1, -1 do

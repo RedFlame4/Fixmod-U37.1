@@ -41,9 +41,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 
 		local splinter_ray
 		if ignore_unit then
-			splinter_ray = World:raycast("ray", hit_pos, pos, "ignore_unit", ignore_unit, "slot_mask", managers.slot:get_mask("world_geometry"))
+			splinter_ray = World:raycast("ray", hit_pos, pos, "ignore_unit", ignore_unit, "slot_mask", slotmask)
 		else
-			splinter_ray = World:raycast("ray", hit_pos, pos, "slot_mask", managers.slot:get_mask("world_geometry"))
+			splinter_ray = World:raycast("ray", hit_pos, pos, "slot_mask", slotmask)
 		end
 
 		if splinter_ray then
@@ -77,7 +77,8 @@ function ExplosionManager:detect_and_give_dmg( params )
 		local hit_unit = hit_body:unit()
 		local hit_unit_key = hit_unit:key()
 		local char_dmg_ext = hit_unit:character_damage()
-		local apply_char_dmg = char_dmg_ext and char_dmg_ext.damage_explosion and not characters_hit[hit_unit_key]
+		local char_dead = char_dmg_ext and char_dmg_ext:dead()
+		local apply_char_dmg = char_dmg_ext and not char_dead and char_dmg_ext.damage_explosion and not characters_hit[hit_unit_key]
 		local apply_body_dmg = hit_body:extension() and hit_body:extension().damage
 
 		units_to_push[hit_unit_key] = hit_unit
@@ -86,12 +87,15 @@ function ExplosionManager:detect_and_give_dmg( params )
 		-- bags previously required a dynamic() check on the body which catches tons of other unneeded things
 		if apply_char_dmg or apply_body_dmg or hit_unit:carry_data() and hit_unit:carry_data():can_explode() then
 			local ray_hit = false
-			if char_dmg_ext then
+			if char_dmg_ext and not char_dead then
 				if params.no_raycast_check_characters then
 					ray_hit = true
 				else
 					for _, s_pos in ipairs( splinters ) do
-						ray_hit = not World:raycast( "ray", s_pos, hit_body:center_of_mass(), "slot_mask", managers.slot:get_mask("world_geometry"), "report" )
+						ray_hit = not World:raycast( "ray", s_pos, hit_body:center_of_mass(), "slot_mask", slotmask, "ignore_unit", {
+							hit_body:unit(),
+							ignore_unit
+						}, "report" )
 
 						if ray_hit then
 							break
@@ -124,12 +128,11 @@ function ExplosionManager:detect_and_give_dmg( params )
 					self:_apply_body_damage( true, hit_body, user_unit, dir, damage )
 				end
 
-				damage = math.max( damage, 1 ) -- under 1 damage is generally not allowed
-
 				if apply_char_dmg then
+					damage = math.max( damage, 1 ) -- under 1 damage is generally not allowed
+
 					characters_hit[hit_unit_key] = true
 
-					local dead_before = hit_unit:character_damage():dead()
 					local action_data = {
 						variant = "explosion",
 						damage = damage,
@@ -140,7 +143,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 
 					hit_unit:character_damage():damage_explosion( action_data )
 
-					if not dead_before and hit_unit:base() and hit_unit:base()._tweak_table and hit_unit:character_damage():dead() then
+					if hit_unit:base() and hit_unit:base()._tweak_table and hit_unit:character_damage():dead() then
 						type = hit_unit:base()._tweak_table
 
 						if CopDamage.is_civilian(type) then
@@ -198,11 +201,11 @@ function ExplosionManager:client_damage_and_push( position, normal, user_unit, d
 		units_to_push[ hit_body:unit():key() ] = hit_unit
 
 		local apply_dmg = hit_body:extension() and hit_body:extension().damage and hit_unit:id() == -1
-		local dir, len, damage
 		if apply_dmg then
-			dir = hit_body:center_of_mass()
-			len = mvector3.direction( dir, position, dir )
-			damage = dmg * math.pow( math.clamp( 1 - len / range, 0, 1 ), curve_pow )
+			local dir = hit_body:center_of_mass()
+			local len = mvector3.direction( dir, position, dir )
+			local damage = dmg * math.pow( math.clamp( 1 - len / range, 0, 1 ), curve_pow )
+
 			self:_apply_body_damage( false, hit_body, user_unit, dir, damage )
 		end
 	end

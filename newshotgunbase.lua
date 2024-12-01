@@ -11,7 +11,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 		return NewShotgunBase.super._fire_raycast(self, user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, shoot_through_data)
 	end
 
-	local result = {}	
+	local result = {}
 	local hit_enemies = {}
 	local col_rays
 	if self._alert_events then

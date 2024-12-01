@@ -318,8 +318,16 @@ end
 end--]]
 
 function CopLogicBase.chk_start_action_dodge(data, reason)
+	if data.unit:movement():chk_action_forbidden("walk") then
+		return
+	end
+
 	local char_tweak_dodge = data.char_tweak.dodge
-	if not char_tweak_dodge or not char_tweak_dodge.occasions[reason] or data.dodge_chk_timeout_t and data.t < data.dodge_chk_timeout_t or data.unit:movement():chk_action_forbidden("walk") then
+	if not char_tweak_dodge or not char_tweak_dodge.occasions[reason] then
+		return
+	end
+
+	if data.dodge_timeout_t and data.t < data.dodge_timeout_t or data.dodge_chk_timeout_t and data.t < data.dodge_chk_timeout_t then
 		return
 	end
 

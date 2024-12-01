@@ -235,8 +235,28 @@ function CopActionWalk:_init()
 			sync_yaw = 1 + math_ceil(yaw * 254 / 360)
 		end
 
+		local end_pose_code
+		if not action_desc.end_pose then
+			end_pose_code = 0
+		elseif action_desc.end_pose == "stand" then
+			end_pose_code = 1
+		else
+			end_pose_code = 2
+		end
+
 		-- Sync the position of a navlink but not the parameters, they get synced after we use it successfully
-		self._ext_network:send("action_walk_start", self._nav_point_pos(path[2]), 1, 0, false, self._haste == "walk" and 1 or 2, sync_yaw, self._no_walk and true or false, self._no_strafe and true or false, not action_desc.end_pose and 0 or action_desc.end_pose == "stand" and 1 or 2)
+		self._ext_network:send(
+			"action_walk_start",
+			self._nav_point_pos(path[2]),
+			1,
+			0,
+			false, 
+			self._haste == "walk" and 1 or 2,
+			sync_yaw,
+			self._no_walk and true or false,
+			self._no_strafe and true or false,
+			end_pose_code
+		)
 
 		self._unit:brain():rem_pos_rsrv("stand")
 		self._unit:brain():add_pos_rsrv("move_dest", {
@@ -354,7 +374,7 @@ function CopActionWalk._calculate_shortened_path(path)
 
 			mvec3_lerp(test_pos, last_pos.x and last_pos or last_pos.c_class:end_position(), path[i], 0.8) -- if the previous navpoint is a navlink, shorten the path based off it's end position
 
-			if not managers.navigation:raycast({pos_from = test_pos, pos_to = CopActionWalk._nav_point_pos(path[i + 1])}) then
+			if not CopActionWalk._chk_shortcut_pos_to_pos(test_pos, CopActionWalk._nav_point_pos(path[i + 1])) then
 				mvec3_set(path[i], test_pos)
 			end
 		end
@@ -369,7 +389,6 @@ local diagonals = {
 function CopActionWalk._apply_padding_to_simplified_path(path)
 	local offset = tmp_vec1
 	local to_pos = tmp_vec2
-
 	for i = 2, #path - 1 do
 		local pos = path[i]
 		if pos.x then -- current is not a navlink, we can apply padding
@@ -391,7 +410,11 @@ function CopActionWalk._apply_padding_to_simplified_path(path)
 				mvec3_lerp(offset, offset, trace[1], 0.5)
 
 				local last_pos = path[i - 1] -- if the previous navpoint is a navlink, apply padding based off it's end position
-				if not managers.navigation:raycast({pos_from = offset, pos_to = CopActionWalk._nav_point_pos(path[i + 1])}) and not managers.navigation:raycast({pos_from = last_pos.x and last_pos or last_pos.c_class:end_position(), pos_to = offset}) then
+				last_pos = last_pos.x and last_pos or last_pos.c_class:end_position()
+
+				local next_pos = CopActionWalk._nav_point_pos(path[i + 1])
+
+				if not CopActionWalk._chk_shortcut_pos_to_pos(last_pos, offset) and not CopActionWalk._chk_shortcut_pos_to_pos(offset, next_pos) then
 					mvec3_set(pos, offset)
 				end
 			end
@@ -646,6 +669,7 @@ function CopActionWalk:update(t)
 
 			mvec3_set(wanted_u_fwd, move_dir_norm)
 			mvec3_rot(wanted_u_fwd, self._walk_side_rot[wanted_walk_dir])
+
 			mrot_lookat(rot_new, wanted_u_fwd, math_up)
 			mrot_slerp(rot_new, self._common_data.rot, rot_new, math_min(1, dt * 5))
 		end
@@ -713,25 +737,9 @@ function CopActionWalk:update(t)
 		local variant = self._haste
 		-- Tried tying this to the velocity of the animations themselves, but it just led to some issues like dozers just barely not running fast enough to play the run animation and doing a fast walk instead
 		if variant == "run" then
-			if anim_data.sprint then
-				if real_velocity > 480 and anim_data.pose == "stand" then
-					variant = "sprint"
-				elseif real_velocity > 250 then
-					variant = "run"
-				elseif not self._no_walk then
-					variant = "walk"
-				end
-			elseif anim_data.run then
-				if real_velocity > 530 and walk_anim_velocities.sprint and anim_data.pose == "stand" then
-					variant = "sprint"
-				elseif real_velocity > 250 then
-					variant = "run"
-				elseif not self._no_walk then
-					variant = "walk"
-				end
-			elseif real_velocity > 530 and walk_anim_velocities.sprint and anim_data.pose == "stand" then
+			if real_velocity > (anim_data.sprint and 480 or 530) and walk_anim_velocities.sprint and anim_data.pose == "stand" then
 				variant = "sprint"
-			elseif real_velocity > 300 then
+			elseif real_velocity > ((anim_data.run or anim_data.sprint) and 250 or 300) then
 				variant = "run"
 			elseif not self._no_walk then
 				variant = "walk"
@@ -852,7 +860,7 @@ function CopActionWalk:_upd_start_anim(t)
 			mvec3_set(tmp_vec2, self._curve_path[2])
 			mvec3_sub(tmp_vec2, self._curve_path[1])
 
-			if mvec3_dot(tmp_vec1, tmp_vec2) < 0 and not managers.navigation:raycast({pos_from = old_pos, pos_to = self._curve_path[3]}) then
+			if mvec3_dot(tmp_vec1, tmp_vec2) < 0 and not CopActionWalk._chk_shortcut_pos_to_pos(old_pos, self._curve_path[3]) then
 				table_remove(self._curve_path, 2)
 			else
 				break
@@ -1002,7 +1010,7 @@ function CopActionWalk._calculate_simplified_path(path, nr_iterations, z_test, a
 		local nav_point = path[i]
 		local next_nav_point = CopActionWalk._nav_point_pos(path[i + 1])
 		-- If the current isn't a navlink, attempt to shortcut
-		if nav_point.x and math_abs((nav_point.z - prev_nav_point.z) + (nav_point.z - next_nav_point.z)) < 60 and not managers.navigation:raycast({pos_from = prev_nav_point, pos_to = next_nav_point}) then
+		if nav_point.x and math_abs((nav_point.z - prev_nav_point.z) + (nav_point.z - next_nav_point.z)) < 60 and not CopActionWalk._chk_shortcut_pos_to_pos(prev_nav_point, next_nav_point) then
 			table_remove(path, i) -- We can skip this navpoint
 		else
 			-- current navpoint didn't get removed, if the navpoint is a navlink then use it's end position to shortcut
@@ -1346,7 +1354,9 @@ function CopActionWalk:_upd_stop_anim_first_frame(t)
 		return
 	end
 
-	self._machine:set_speed(redir_res, self:_get_current_max_walk_speed(self._stop_anim_side) / self._walk_anim_velocities[self._ext_anim.pose][self._stance.name][self._haste][self._stop_anim_side])
+	local speed_mul = self:_get_current_max_walk_speed(self._stop_anim_side) / self._walk_anim_velocities[self._ext_anim.pose][self._stance.name][self._haste][self._stop_anim_side]
+
+	self._machine:set_speed(redir_res, speed_mul)
 
 	self._stop_anim_init_pos = mvec3_cpy(self._last_pos)
 	self._stop_anim_end_pos = self._nav_point_pos(self._simplified_path[2])
@@ -1717,10 +1727,11 @@ function CopActionWalk:_upd_walk_turn(t)
 	if self._ext_anim.walk_turn then
 		self._last_pos = self._unit:position() -- new vector, no need to copy
 
+		self._unit:m_rotation(tmp_rot1)
+		self._ext_movement:set_m_rot(tmp_rot1)
 		self._ext_movement:set_m_pos(self._last_pos)
 
 		self:_set_new_pos(TimerManager:game():delta_time())
-		self._ext_movement:set_m_rot(self._unit:rotation())
 	else
 		if self._walk_turn_blend_to_middle then
 			self._machine:set_animation_time_all_segments(0.5)
@@ -1732,7 +1743,7 @@ function CopActionWalk:_upd_walk_turn(t)
 
 		local c_index = self._curve_path_index + 2
 		while c_index < #self._curve_path do
-			if not managers.navigation:raycast({pos_from = self._common_data.pos, pos_to = self._curve_path[c_index]}) then -- TODO: fix, what's the point in calculating a curved path if you just get rid of it
+			if not CopActionWalk._chk_shortcut_pos_to_pos(self._common_data.pos, self._curve_path[c_index]) then -- TODO: fix, what's the point in calculating a curved path if you just get rid of it
 				table_remove(self._curve_path, c_index - 1)
 			else
 				break

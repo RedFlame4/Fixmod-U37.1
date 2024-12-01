@@ -6,7 +6,7 @@ end)
 
 function CopBrain:_chk_use_cover_grenade( unit )
 	if not Network:is_server() or not self._logic_data.char_tweak.dodge_with_grenade or not self._logic_data.attention_obj then
-		return 
+		return
 	end
 
 	local check_f = self._logic_data.char_tweak.dodge_with_grenade.check

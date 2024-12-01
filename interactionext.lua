@@ -1,10 +1,8 @@
 -- I am server and a client wants me to verify that he is allowed to interact
 function CarryInteractionExt:sync_interacted(peer, player, status, skip_alive_check)
 	player = player or managers.network:game():member(peer:id()):unit()
-	if peer then
-		if not managers.player:register_carry(peer:id(), self._unit:carry_data() and self._unit:carry_data():carry_id()) then
-			return
-		end
+	if peer and not managers.player:register_carry(peer:id(), self._unit:carry_data() and self._unit:carry_data():carry_id()) then
+		return
 	end
 
 	if self._unit:damage():has_sequence("interact") then
