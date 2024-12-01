@@ -10,10 +10,22 @@ function ExplosionManager:detect_and_give_dmg( params )
 	local col_ray = params.col_ray
 	local alert_filter = params.alert_filter or managers.groupai:state():get_unit_type_filter( "civilians_enemies" )
 	local owner = params.owner
+	local push_units = true
+	local alert_radius = params.alert_radius or 10000
+
+	if params.push_units ~= nil then
+		push_units = params.push_units
+	end
 
 	local player = managers.player:player_unit()
 	if alive( player ) and player_dmg ~= 0 then
-		player:character_damage():damage_explosion( { position = hit_pos, range = range, damage = player_dmg } )
+		player:character_damage():damage_explosion({
+			position = hit_pos,
+			range = range,
+			damage = player_dmg,
+			variant = "explosion",
+			ignite_character = params.ignite_character
+		})
 	end
 
 	local bodies = (ignore_unit or World):find_bodies("intersect", "sphere", hit_pos, range, slotmask)
@@ -22,7 +34,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 		alert_unit = alert_unit:base():thrower_unit()
 	end
 
-	managers.groupai:state():propagate_alert( { "explosion", hit_pos, 10000, alert_filter, alert_unit } )
+	managers.groupai:state():propagate_alert( { "explosion", hit_pos, alert_radius, alert_filter, alert_unit } )
 
 	local splinters = { mvector3.copy( hit_pos ) }
 	local dirs = { 
@@ -106,9 +118,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 				if ray_hit and hit_unit:base() and hit_unit:base()._tweak_table and not hit_unit:character_damage():dead() then
 					type = hit_unit:base()._tweak_table
 
-					if CopDamage:_type_civilian(type) then -- HACK!
+					if CopDamage.is_civilian(type) then
 						count_civilians = count_civilians + 1
-					elseif CopDamage:_type_gangster(type) then -- HACK!
+					elseif CopDamage.is_gangster(type) then
 						count_gangsters = count_gangsters + 1
 					elseif not table.contains(CriminalsManager.character_names(), type) then
 						count_cops = count_cops + 1
@@ -146,9 +158,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 					if hit_unit:base() and hit_unit:base()._tweak_table and hit_unit:character_damage():dead() then
 						type = hit_unit:base()._tweak_table
 
-						if CopDamage:_type_civilian(type) then -- HACK!
+						if CopDamage.is_civilian(type) then
 							count_civilian_kills = count_civilian_kills + 1
-						elseif CopDamage:_type_gangster(type) then -- HACK!
+						elseif CopDamage.is_gangster(type) then
 							count_gangster_kills = count_gangster_kills + 1
 						elseif not table.contains(CriminalsManager.character_names(), type) then
 							count_cop_kills = count_cop_kills + 1
@@ -159,37 +171,21 @@ function ExplosionManager:detect_and_give_dmg( params )
 		end
 	end
 
-	managers.explosion:units_to_push( units_to_push, hit_pos, range )
-
-	if owner then
-		managers.statistics:shot_fired({hit = false, weapon_unit = owner})
-
-		for i = 1, count_gangsters + count_cops do
-			managers.statistics:shot_fired({
-				hit = true,
-				weapon_unit = owner,
-				skip_bullet_count = true
-			})
-		end
-
-		local weapon_pass, weapon_type_pass, count_pass, all_pass
-		for achievement, achievement_data in pairs(tweak_data.achievement.explosion_achievements) do
-			weapon_pass = not achievement_data.weapon or true
-			weapon_type_pass = not achievement_data.weapon_type or owner:base() and owner:base().weapon_tweak_data and owner:base():weapon_tweak_data().category == achievement_data.weapon_type
-
-			if achievement_data.count then
-				count_pass = (achievement_data.kill and count_cop_kills + count_gangster_kills or count_cops + count_gangsters) >= achievement_data.count
-			end
-
-			all_pass = weapon_pass and weapon_type_pass and count_pass
-
-			if all_pass and achievement_data.award then
-				managers.achievment:award(achievement_data.award)
-			end
-		end
+	if push_units and push_units == true then
+		managers.explosion:units_to_push(units_to_push, hit_pos, range)
 	end
 
-	return hit_units, splinters
+	local results = {}
+	if owner then
+		results.count_cops = count_cops
+		results.count_gangsters = count_gangsters
+		results.count_civilians = count_civilians
+		results.count_cop_kills = count_cop_kills
+		results.count_gangster_kills = count_gangster_kills
+		results.count_civilian_kills = count_civilian_kills
+	end
+
+	return hit_units, splinters, results
 end
 
 function ExplosionManager:client_damage_and_push( position, normal, user_unit, dmg, range, curve_pow )

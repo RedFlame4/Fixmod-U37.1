@@ -1,9 +1,3 @@
-Hooks:PreHook(CopBrain, "set_active", "promod_set_active", function(self, state)
-	if not state and self._current_logic_name ~= "inactive" and self._logic_data.is_converted then
-		self._attention_handler:override_attention("enemy_team_cbt", nil) -- fixes cops shooting dead converts
-	end
-end)
-
 function CopBrain:_chk_use_cover_grenade( unit )
 	if not Network:is_server() or not self._logic_data.char_tweak.dodge_with_grenade or not self._logic_data.attention_obj then
 		return

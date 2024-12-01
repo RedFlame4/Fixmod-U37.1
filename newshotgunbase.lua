@@ -3,16 +3,14 @@ Hooks:PostHook(NewShotgunBase, "setup_default", "promod_setup_default", function
 	self._range = self._damage_near + self._damage_far -- the max distance before damage hits zero is actually damage_near + damage_far for some reason
 end)
 
+local mvec_temp = Vector3()
 local mvec_to = Vector3()
 local mvec_direction = Vector3()
 local mvec_spread_direction = Vector3()
 function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, shoot_through_data ) -- ( user_unit, from_pos, direction )
-	if self._rays == 1 then
-		return NewShotgunBase.super._fire_raycast(self, user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, shoot_through_data)
-	end
-
 	local result = {}
 	local hit_enemies = {}
+	local hit_objects = {}
 	local col_rays
 	if self._alert_events then
 		col_rays = {}
@@ -30,8 +28,14 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 				hit_enemies[ enemy_key ] = col_ray
 			end
 		else
-			-- per-pellet damage, as to prevent the shotgun from exceeding it's base damage since it can hit the same unit more than once
-			self._bullet_class:on_collision( col_ray, self._unit, user_unit, self:get_damage_falloff(pellet_damage, col_ray, user_unit) )
+			local add_shoot_through_bullet = self._can_shoot_through_shield or self._can_shoot_through_wall
+			if add_shoot_through_bullet then
+				hit_objects[unit:key()] = hit_objects[unit:key()] or {}
+				table.insert(hit_objects[unit:key()], col_ray)
+			else
+				-- per-pellet damage, as to prevent the shotgun from exceeding it's base damage since it can hit the same unit more than once
+				self._bullet_class:on_collision(col_ray, self._unit, user_unit, self:get_damage_falloff(pellet_damage, col_ray, user_unit))
+			end
 		end
 	end
 
@@ -39,7 +43,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 
 	mvector3.set( mvec_direction, direction )
 
-	for _ = 1, self._rays do -- 6 killer rays 
+	for _ = 1, shoot_through_data and 1 or self._rays do -- 6 killer rays 
 		mvector3.set( mvec_spread_direction, mvec_direction )
 
 		if spread then
@@ -50,7 +54,8 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 		mvector3.multiply( mvec_to, self._range ) -- limit ray range to the max distance the shotgun can do damage
 		mvector3.add( mvec_to, from_pos )
 
-		local col_ray = World:raycast( "ray", from_pos, mvec_to, "slot_mask", self._bullet_slotmask, "ignore_unit", self._setup.ignore_units )
+		local ray_from_unit = shoot_through_data and alive(shoot_through_data.ray_from_unit) and shoot_through_data.ray_from_unit or nil
+		local col_ray = (ray_from_unit or World):raycast("ray", from_pos, mvec_to, "slot_mask", self._bullet_slotmask, "ignore_unit", self._setup.ignore_units)
 		if col_rays then -- remember all rays. we need them for alert propagation
 			if col_ray then
 				table.insert( col_rays, col_ray )
@@ -86,10 +91,43 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 		end
 	end
 
+	for _, col_rays in pairs(hit_objects) do
+		local center_ray = col_rays[1]
+		if #col_rays > 1 then
+			mvector3.set_static(mvec_temp, center_ray)
+
+			for _, col_ray in ipairs(col_rays) do
+				mvector3.add(mvec_temp, col_ray.position)
+			end
+
+			mvector3.divide(mvec_temp, #col_rays)
+
+			local closest_dist_sq = mvector3.distance_sq(mvec_temp, center_ray.position)
+			local dist_sq
+			for _, col_ray in ipairs(col_rays) do
+				dist_sq = mvector3.distance_sq(mvec_temp, col_ray.position)
+
+				if closest_dist_sq > dist_sq then
+					closest_dist_sq = dist_sq
+					center_ray = col_ray
+				end
+			end
+		end
+
+		NewShotgunBase.super._fire_raycast(self, user_unit, from_pos, center_ray.ray, dmg_mul, shoot_player, 0, autohit_mul, suppr_mul, shoot_through_data)
+	end
+
 	for _, col_ray in pairs( hit_enemies ) do
 		local damage = self:get_damage_falloff(damage, col_ray, user_unit)
 		if damage > 0 then
-			local result = self._bullet_class:on_collision( col_ray, self._unit, user_unit, damage )
+			local result
+			local add_shoot_through_bullet = self._can_shoot_through_shield or self._can_shoot_through_enemy or self._can_shoot_through_wall
+			if add_shoot_through_bullet then
+				result = NewShotgunBase.super._fire_raycast(self, user_unit, from_pos, col_ray.ray, dmg_mul, shoot_player, 0, autohit_mul, suppr_mul, shoot_through_data)
+			else
+				result = self._bullet_class:on_collision(col_ray, self._unit, user_unit, damage)
+			end
+
 			if result and result.type == "death" then
 				managers.game_play_central:do_shotgun_push(col_ray.unit, col_ray.position, col_ray.ray, col_ray.distance)
 			end
@@ -99,7 +137,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 	if dodge_enemies and self._suppression then
 		for enemy_data, dis_error in pairs( dodge_enemies ) do
 			if not enemy_data.unit:movement():cool() then -- fix suppression with shotguns in stealth
-				enemy_data.unit:character_damage():build_suppression( suppr_mul * dis_error * self._suppression )
+				enemy_data.unit:character_damage():build_suppression( suppr_mul * dis_error * self._suppression, self._panic_suppression_chance )
 			end
 		end
 	end
@@ -110,9 +148,14 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 		result.rays = #col_rays	> 0 and col_rays
 	end
 
-	managers.statistics:shot_fired( { hit = result.hit_enemy, weapon_unit = self._unit } )
+	if not shoot_through_data then
+		managers.statistics:shot_fired({
+			hit = false,
+			weapon_unit = self._unit
+		})
+	end
 
-	for _, _ in pairs(hit_enemies) do
+	for _ in pairs(hit_enemies) do
 		managers.statistics:shot_fired({
 			hit = true,
 			weapon_unit = self._unit,

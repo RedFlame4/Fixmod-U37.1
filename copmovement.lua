@@ -26,15 +26,17 @@ Hooks:PostHook(CopMovement, "_change_stance", "REAI_change_stance", function(sel
 end)
 
 function CopMovement:synch_attention(attention)
-	if self._attention and self._attention.destroy_listener_key then
-		self._attention.unit:base():remove_destroy_listener( self._attention.destroy_listener_key )
-		self._attention.destroy_listener_key = nil
+	if attention and self._unit:character_damage():dead() then
+		debug_pause_unit(self._unit, "[CopMovement:synch_attention] dead AI", self._unit, inspect(attention))
 	end
 
-	if attention and attention.unit and attention.unit:base() and attention.unit:base().add_destroy_listener then
-		local listener_key = "CopMovement" .. tostring(self._unit:key())
-		attention.destroy_listener_key = listener_key
-		attention.unit:base():add_destroy_listener(listener_key, callback(self, self, "attention_unit_destroy_clbk"))
+	self:_remove_attention_destroy_listener(self._attention)
+	self:_add_attention_destroy_listener(attention)
+
+	if attention and attention.unit and not attention.destroy_listener_key then
+		debug_pause_unit(attention.unit, "[CopMovement:synch_attention] problematic attention unit", attention.unit)
+		self:synch_attention(nil)
+		return
 	end
 
 	local old_attention = self._attention

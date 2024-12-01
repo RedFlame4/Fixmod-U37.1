@@ -1266,8 +1266,7 @@ function CopActionWalk:_reserve_nav_pos(nav_pos, next_pos, from_pos, vel)
 	mvec3_cross(step_vec, step_vec, math_up)
 	mvec3_set_l(step_vec, 65)
 
-	-- rserve :goldfarbyes:
-	local step_clbk = callback(self, self, "_rserve_pos_step_clbk", {step_mul = 1, nr_attempts = 0, start_pos = nav_pos, fwd_pos = next_pos, bwd_pos = from_pos, step_vec = step_vec})
+	local step_clbk = callback(self, self, "_reserve_pos_step_clbk", {step_mul = 1, nr_attempts = 0, start_pos = nav_pos, fwd_pos = next_pos, bwd_pos = from_pos, step_vec = step_vec})
 	local res_pos = managers.navigation:reserve_pos(TimerManager:game():time() + dis / vel, 1, nav_pos, step_clbk, 40, self._ext_movement:pos_rsrv_id())
 	if res_pos then
 		mvec3_set(nav_pos, res_pos.position)
