@@ -92,25 +92,22 @@ function ExplosionManager:detect_and_give_dmg( params )
 				else
 					for _, s_pos in ipairs( splinters ) do
 						ray_hit = not World:raycast( "ray", s_pos, hit_body:center_of_mass(), "slot_mask", managers.slot:get_mask("world_geometry"), "report" )
+
 						if ray_hit then
 							break
 						end
 					end
 				end
 
-				if ray_hit then
-					local hit_unit = hit_body:unit()
-					if hit_unit:base() and hit_unit:base()._tweak_table and not hit_unit:character_damage():dead() then
-						type = hit_unit:base()._tweak_table
+				if ray_hit and hit_unit:base() and hit_unit:base()._tweak_table and not hit_unit:character_damage():dead() then
+					type = hit_unit:base()._tweak_table
 
-						if CopDamage.is_civilian(type) then
-							count_civilians = count_civilians + 1
-						elseif CopDamage.is_gangster(type) then
-							count_gangsters = count_gangsters + 1
-						elseif table.contains(CriminalsManager.character_names(), type) then
-						else
-							count_cops = count_cops + 1
-						end
+					if CopDamage.is_civilian(type) then
+						count_civilians = count_civilians + 1
+					elseif CopDamage.is_gangster(type) then
+						count_gangsters = count_gangsters + 1
+					elseif not table.contains(CriminalsManager.character_names(), type) then
+						count_cops = count_cops + 1
 					end
 				end
 			else
@@ -150,8 +147,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 							count_civilian_kills = count_civilian_kills + 1
 						elseif CopDamage.is_gangster(type) then
 							count_gangster_kills = count_gangster_kills + 1
-						elseif table.contains(CriminalsManager.character_names(), type) then
-						else
+						elseif not table.contains(CriminalsManager.character_names(), type) then
 							count_cop_kills = count_cop_kills + 1
 						end
 					end
@@ -164,6 +160,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 
 	if owner then
 		managers.statistics:shot_fired({hit = false, weapon_unit = owner})
+
 		for i = 1, count_gangsters + count_cops do
 			managers.statistics:shot_fired({
 				hit = true,
@@ -171,14 +168,18 @@ function ExplosionManager:detect_and_give_dmg( params )
 				skip_bullet_count = true
 			})
 		end
+
 		local weapon_pass, weapon_type_pass, count_pass, all_pass
 		for achievement, achievement_data in pairs(tweak_data.achievement.explosion_achievements) do
 			weapon_pass = not achievement_data.weapon or true
 			weapon_type_pass = not achievement_data.weapon_type or owner:base() and owner:base().weapon_tweak_data and owner:base():weapon_tweak_data().category == achievement_data.weapon_type
+
 			if achievement_data.count then
 				count_pass = (achievement_data.kill and count_cop_kills + count_gangster_kills or count_cops + count_gangsters) >= achievement_data.count
 			end
+
 			all_pass = weapon_pass and weapon_type_pass and count_pass
+
 			if all_pass and achievement_data.award then
 				managers.achievment:award(achievement_data.award)
 			end
