@@ -106,9 +106,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 				if ray_hit and hit_unit:base() and hit_unit:base()._tweak_table and not hit_unit:character_damage():dead() then
 					type = hit_unit:base()._tweak_table
 
-					if CopDamage.is_civilian(type) then
+					if CopDamage:_type_civilian(type) then -- HACK!
 						count_civilians = count_civilians + 1
-					elseif CopDamage.is_gangster(type) then
+					elseif CopDamage:_type_gangster(type) then -- HACK!
 						count_gangsters = count_gangsters + 1
 					elseif not table.contains(CriminalsManager.character_names(), type) then
 						count_cops = count_cops + 1
@@ -146,9 +146,9 @@ function ExplosionManager:detect_and_give_dmg( params )
 					if hit_unit:base() and hit_unit:base()._tweak_table and hit_unit:character_damage():dead() then
 						type = hit_unit:base()._tweak_table
 
-						if CopDamage.is_civilian(type) then
+						if CopDamage:_type_civilian(type) then -- HACK!
 							count_civilian_kills = count_civilian_kills + 1
-						elseif CopDamage.is_gangster(type) then
+						elseif CopDamage:_type_gangster(type) then -- HACK!
 							count_gangster_kills = count_gangster_kills + 1
 						elseif not table.contains(CriminalsManager.character_names(), type) then
 							count_cop_kills = count_cop_kills + 1

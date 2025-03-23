@@ -1422,7 +1422,7 @@ local some_fucking_lookup_table = {["_upd_wait"] = true, ["_upd_start_anim_first
 local some_fucking_lookup_table_electric_boogaloo = {["_upd_nav_link"] = true, ["_upd_nav_link_first_frame"] = true, ["_upd_nav_link_blend_to_idle"] = true, ["_upd_stop_anim_first_frame"] = true, ["_upd_stop_anim"] = true, ["_upd_walk_turn_first_frame"] = true, ["_upd_walk_turn"] = true}
 
 function CopActionWalk:stop()
-	local pos = self._simplified_path[#self._simplified_path] -- no need to use self._nav_point_pos as a path will never end in a navlink
+	local pos = self._nav_point_pos(self._simplified_path[#self._simplified_path]) -- HACK! path shouldn't end in a navlink but we can't rely on the host having fixmod
 
 	self._persistent = false
 
