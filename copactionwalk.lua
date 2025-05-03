@@ -1605,7 +1605,7 @@ function CopActionWalk:_upd_nav_link(t)
 		self._unit:m_rotation(tmp_rot1)
 		self._ext_movement:set_m_rot(tmp_rot1)
 		self._ext_movement:set_m_pos(self._last_pos)
-	else -- don't check for self._simplified_path[2] in case a client finishes before the next navpoint gets synced
+	elseif self._simplified_path[2] or not self._persistent then
 		self._simplified_path[1] = mvec3_cpy(self._common_data.pos)
 
 		self._common_data.unit:set_driving("script")
@@ -1672,16 +1672,12 @@ function CopActionWalk:_upd_nav_link(t)
 			self._curve_path_index = 1
 
 			self:update(t)
-		elseif not self._persistent then -- this should absolutely never happen but does because of the sync issue fixed in this function
+		else -- this should absolutely never happen but does because of the sync issue fixed in this function
 			self._expired = true
 
 			if self._end_rot then
 				self._ext_movement:set_rotation(self._end_rot)
 			end
-		else -- happens if a client finished the navlink before the host has synced another navpoint, a path will never end in a navlink so just go to _upd_wait
-			self._end_of_curved_path = true -- ensure the unit won't prematurely exit _upd_wait
-
-			self:_set_updator("_upd_wait")
 		end
 	end
 end
