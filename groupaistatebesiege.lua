@@ -536,7 +536,7 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 
 			local used_grenade = nil
 			if push then
-				local detonate_pos
+				local detonate_pos = nil
 				if charge then
 					local criminal_positions = {}
 					for c_key, c_data in pairs(assault_area.criminal.units) do
