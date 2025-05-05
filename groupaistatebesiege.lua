@@ -402,9 +402,7 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 
 	local objective_area = current_objective.area
 	if obstructed_area then
-		if phase_is_anticipation then
-			pull_back = true
-		elseif current_objective.moving_out then
+		if current_objective.moving_out then
 			if not current_objective.open_fire then
 				open_fire = true
 				objective_area = obstructed_area
@@ -412,7 +410,13 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 		elseif not current_objective.pushed or charge and not current_objective.charge then
 			push = true
 		end
-	elseif not current_objective.moving_out then
+	elseif current_objective.moving_out then
+		local obstructed_path_index = self:_chk_coarse_path_obstructed(group)
+		if obstructed_path_index then
+			objective_area = self:get_area_from_nav_seg_id(current_objective.coarse_path[math.max(obstructed_path_index - 1, 1)][1])
+			pull_back = true
+		end
+	else
 		local has_criminals_close = nil
 		for area_id, neighbour_area in pairs(current_objective.area.neighbours) do
 			if next(neighbour_area.criminal.units) then
@@ -434,12 +438,6 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 			end
 		elseif current_objective.open_fire then
 			pull_back = true
-		end
-	elseif not current_objective.open_fire then
-		local obstructed_path_index = self:_chk_coarse_path_obstructed(group)
-		if obstructed_path_index then
-			objective_area = self:get_area_from_nav_seg_id(current_objective.coarse_path[math.max(obstructed_path_index - 1, 1)][1])
-			open_fire = true
 		end
 	end
 
@@ -733,11 +731,13 @@ function GroupAIStateBesiege:_chk_coarse_path_obstructed(group)
 	if not current_objective.coarse_path then
 		return
 	end
-
 	local forwardmost_i_nav_point = self:_get_group_forwardmost_coarse_path_index(group)
 	if forwardmost_i_nav_point then
-		if current_objective.coarse_path[forwardmost_i_nav_point + 1] and not self:is_nav_seg_safe(current_objective.coarse_path[forwardmost_i_nav_point + 1][1]) then
-			return forwardmost_i_nav_point + 1
+		for i = forwardmost_i_nav_point + 1, #current_objective.coarse_path do
+			local nav_point = current_objective.coarse_path[i]
+			if not self:is_nav_seg_safe(nav_point[1]) then
+				return i
+			end
 		end
 	end
 end
