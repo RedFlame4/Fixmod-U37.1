@@ -51,7 +51,7 @@ function HuskPlayerMovement:_get_max_move_speed(...)
 	-- but it is still good to keep it relatively in sync anyway
 	local path_length = #self._move_data.path - 2
 	if path_length > 0 then
-		move_speed = move_speed * (1 + path_length / 20) -- 5% boost for every navpoint behind past the first one
+		move_speed = move_speed * (1 + path_length / 10) -- 10% boost for every navpoint behind past the first one
 	end
 
 	return move_speed
