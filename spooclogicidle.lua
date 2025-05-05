@@ -32,7 +32,7 @@ function SpoocLogicIdle._upd_enemy_detection(data)
 			end
 
 			if obj_failed then
-				managers.groupai:state():on_objective_failed(data.unit, data.objective)
+				data.objective_failed_clbk(data.unit, data.objective)
 			end
 
 			if my_data == data.internal_data then
