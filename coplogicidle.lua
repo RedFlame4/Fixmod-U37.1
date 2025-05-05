@@ -69,5 +69,5 @@ function CopLogicIdle.clbk_action_timeout(ignore_this, data)
 		CopLogicIdle._start_idle_action_from_act(data)
 	end
 
-	managers.groupai:state():on_objective_complete(data.unit, data.objective)
+	data.objective_complete_clbk(data.unit, data.objective)
 end

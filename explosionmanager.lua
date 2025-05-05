@@ -150,7 +150,8 @@ function ExplosionManager:detect_and_give_dmg( params )
 						damage = damage,
 						attacker_unit = user_unit,
 						weapon_unit = owner,
-						col_ray = self._col_ray or { position = hit_body:position(), ray = dir }
+						col_ray = self._col_ray or { position = hit_body:position(), ray = dir },
+						ignite_character = params.ignite_character
 					}
 
 					hit_unit:character_damage():damage_explosion( action_data )
