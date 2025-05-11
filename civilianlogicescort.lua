@@ -7,8 +7,7 @@ function CivilianLogicEscort._begin_advance_action(data, my_data)
 		type = "walk",
 		nav_path = my_data.advance_path,
 		variant = haste,
-		body_part = 2,
-		end_rot = end_rot
+		body_part = 2
 	}
 
 	if my_data.coarse_path_index >= #my_data.coarse_path - 1 then
