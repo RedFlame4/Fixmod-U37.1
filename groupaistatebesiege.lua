@@ -68,6 +68,9 @@ function GroupAIStateBesiege:_upd_police_activity()
 
 		if self._enemy_weapons_hot then
 			self:_claculate_drama_value()
+			self:_check_spawn_phalanx()
+			self:_check_phalanx_group_has_spawned()
+			self:_check_phalanx_damage_reduction_increase()
 			self:_upd_group_spawning() -- Re-ordered so spawned groups get an objective immediately instead of on the next update
 			self:_begin_new_tasks() -- Re-ordered because otherwise group objectives will use last update assault info
 			self:_upd_regroup_task()
@@ -213,12 +216,15 @@ function GroupAIStateBesiege:_upd_group_spawning()
 		end
 
 		local hopeless = true
+		local current_unit_type = tweak_data.levels:get_ai_group_type()
 		for _, sp_data in ipairs(spawn_points) do
 			local category = group_ai_tweak.unit_categories[u_type_name]
 			if (sp_data.accessibility == "any" or category.access[sp_data.accessibility]) and (not sp_data.amount or sp_data.amount > 0) and sp_data.mission_element:enabled() then
 				hopeless = false
 				if self._t > sp_data.delay_t then
-					produce_data.name = table.random(category.units)
+					local units = category.unit_types[current_unit_type]
+
+					produce_data.name = table.random(units)
 
 					local spawned_unit = sp_data.mission_element:produce(produce_data)
 					local u_key = spawned_unit:key()
