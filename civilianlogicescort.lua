@@ -2,7 +2,7 @@ function CivilianLogicEscort._begin_advance_action(data, my_data)
 	--CopLogicAttack._correct_path_start_pos(data, my_data.advance_path) -- not needed anymore, handled in copactionwalk
 
 	local objective = data.objective
-	local haste = objective and objective.haste or "run
+	local haste = objective and objective.haste or "run"
 	local new_action_data = {
 		type = "walk",
 		nav_path = my_data.advance_path,
