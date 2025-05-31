@@ -115,10 +115,7 @@ function ExplosionManager:detect_and_give_dmg( params )
 					ray_hit = true
 				else
 					for _, s_pos in ipairs( splinters ) do
-						ray_hit = not World:raycast( "ray", s_pos, hit_body:center_of_mass(), "slot_mask", slotmask - 17, "ignore_unit", {
-							hit_body:unit(),
-							ignore_unit
-						}, "report" )
+						ray_hit = not World:raycast( "ray", s_pos, hit_body:center_of_mass(), "slot_mask", slotmask - 17, "ignore_unit", ignore_units, "report" )
 
 						if ray_hit then
 							break
