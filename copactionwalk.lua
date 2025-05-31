@@ -971,7 +971,7 @@ function CopActionWalk:_get_current_max_walk_speed(move_dir)
 		end
 	end
 
-	speed = speed * self._unit:brain().is_hostage and self._unit:brain():is_hostage() and self._common_data.char_tweak.hostage_move_speed or 1
+	speed = speed * (self._unit:brain().is_hostage and self._unit:brain():is_hostage() and self._common_data.char_tweak.hostage_move_speed or 1)
 
 	return speed
 end
