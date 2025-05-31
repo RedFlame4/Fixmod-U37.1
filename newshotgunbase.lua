@@ -129,7 +129,7 @@ function NewShotgunBase:_fire_raycast( user_unit, from_pos, direction, dmg_mul, 
 			end
 
 			if result and result.type == "death" then
-				managers.game_play_central:do_shotgun_push(col_ray.unit, col_ray.position, col_ray.ray, col_ray.distance)
+				managers.game_play_central:do_shotgun_push(col_ray.unit, col_ray.position, col_ray.ray, col_ray.distance, user_unit)
 			end
 		end
 	end

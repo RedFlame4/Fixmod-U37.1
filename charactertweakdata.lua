@@ -37,10 +37,12 @@ Hooks:PostHook(CharacterTweakData, "_set_overkill_290", "fixmod_set_overkill_290
 	self:_process_weapon_usage_table(self.tank.weapon)
 	self:_process_weapon_usage_table(self.shield.weapon)
 	self:_process_weapon_usage_table(self.taser.weapon)
+end)
 
-	-- calculated off fbi_swat health normally which might be unintended
-	-- fbi_swat head health is 32.5 for reference
-	-- 147.692307692 head health when broken
-	-- 80 head health when fixed
-	-- self.city_swat.headshot_dmg_mul = self.city_swat.HEALTH_INIT / 8
+Hooks:PostHook(CharacterTweakData, "_set_sm_wish", "fixmod_set_sm_wish", function(self)
+	 -- none of these are normalised
+	self:_process_weapon_usage_table(self.hector_boss.weapon)
+	self:_process_weapon_usage_table(self.tank.weapon)
+	self:_process_weapon_usage_table(self.shield.weapon)
+	self:_process_weapon_usage_table(self.taser.weapon)
 end)

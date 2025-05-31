@@ -15,7 +15,7 @@ function CopLogicIdle.on_alert( data, alert_data )
 		data.unit:movement():set_cool( false, managers.groupai:state().analyse_giveaway( data.unit:base()._tweak_table, alert_data[5], alert_data ) )
 	end
 
-	if alert_unit and alert_unit:in_slot( data.enemy_slotmask ) then
+	if alive(alert_unit) and alert_unit:in_slot( data.enemy_slotmask ) then
 		local att_obj_data, is_new = CopLogicBase.identify_attention_obj_instant( data, alert_unit:key() )
 
 		if not att_obj_data then -- not interested in detecting this attention object

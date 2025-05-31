@@ -1,5 +1,6 @@
 -- I am server and a client wants me to verify that he is allowed to interact
 function CarryInteractionExt:sync_interacted(peer, player, status, skip_alive_check)
+	local no_player = player == nil
 	player = player or peer:unit()
 	if peer and not managers.player:register_carry(peer, self._unit:carry_data() and self._unit:carry_data():carry_id()) then
 		return
@@ -34,5 +35,9 @@ function CarryInteractionExt:sync_interacted(peer, player, status, skip_alive_ch
 		end
 	elseif self._remove_on_interact then
 		self._unit:set_enabled(false) -- hide the bag until the host despawns it so it doesn't stick around for a split second after pickup
+	end
+
+	if no_player then
+		managers.mission:call_global_event("on_picked_up_carry", self._unit)
 	end
 end
