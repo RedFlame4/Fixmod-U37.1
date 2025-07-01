@@ -186,6 +186,7 @@ function GroupAIStateBesiege:_find_spawn_group_near_area(target_area, allowed_gr
 		if rand_wgt <= 0 then
 			best_grp = candidate.group
 			best_grp_type = candidate.group_type
+			best_grp.delay_t = self._t + best_grp.interval
 			break
 		end
 	end
