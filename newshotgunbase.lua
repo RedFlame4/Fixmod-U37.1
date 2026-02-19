@@ -1,5 +1,5 @@
 -- fix range being set incorrectly, reducing suppression and autohit range
-Hooks:PostHook(NewShotgunBase, "init", "promod_init", function(self)
+Hooks:PostHook(NewShotgunBase, "setup_default", "promod_setup_default", function(self)
 	self._range = self._damage_near + self._damage_far -- the max distance before damage hits zero is actually damage_near + damage_far for some reason
 end)
 

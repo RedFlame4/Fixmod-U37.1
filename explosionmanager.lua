@@ -198,7 +198,7 @@ function ExplosionManager:client_damage_and_push( position, normal, user_unit, d
 	local units_to_push = {}
 	for _, hit_body in ipairs( bodies ) do
 		local hit_unit = hit_body:unit()
-		units_to_push[ hit_body:unit():key() ] = hit_unit
+		units_to_push[ hit_unit:key() ] = hit_unit
 
 		local apply_dmg = hit_body:extension() and hit_body:extension().damage and hit_unit:id() == -1
 		if apply_dmg then
