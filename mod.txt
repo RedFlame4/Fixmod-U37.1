@@ -3,7 +3,7 @@
 	"description" : "Various fixes for issues in U37.1",
 	"author" : "RedFlame",
 	"contact" : "Discord: RedFlame3870",
-	"version" : "1.6",
+	"version" : "1.7",
 	"priority" : 1000,
 	"hooks" : [
 		{"hook_id" : "core/lib/system/corepatchengine", "script_path" : "corepatchengine.lua"},
