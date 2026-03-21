@@ -48,7 +48,7 @@ function GroupAIStateBase:chk_say_teamAI_combat_chatter(unit)
     unit:sound():say("g90", true, true)
 end
 
-function GroupAIStateBase:is_nav_seg_safe(nav_seg)
+--[[function GroupAIStateBase:is_nav_seg_safe(nav_seg)
 	for _, criminal_data in pairs(self._char_criminals) do
 		if criminal_data.tracker:nav_segment() == nav_seg then -- so coarse paths don't fail if they have to go through 2 navsegments that are part of the same area, with criminals inside
 			return false
@@ -75,4 +75,4 @@ function GroupAIStateBase:_merge_coarse_path_by_area(coarse_path)
 
 		i_nav_seg = i_nav_seg - 1
 	end
-end
+end--]]
