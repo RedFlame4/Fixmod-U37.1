@@ -29,23 +29,27 @@ end)
 
 -- Fix team AI spamming combat chatter
 function GroupAIStateBase:chk_say_teamAI_combat_chatter(unit)
-    if not self:is_detection_persistent() then
-        return
-    end
+	if not self:is_detection_persistent() then
+		return
+	end
 
-    local frequency_lerp = self._drama_data.amount
-	local t = self._t
-    if t < self._teamAI_last_combat_chatter_t + math_lerp(5, 0.5, frequency_lerp) then
-        return
-    end
+	local drama_amount = self._drama_data.amount
+	local frequency_lerp = drama_amount
+	local delay = math.lerp(5, 0.5, frequency_lerp)
+	local delay_t = self._teamAI_last_combat_chatter_t + delay
+	if delay_t > self._t then
+		return
+	end
 
-	self._teamAI_last_combat_chatter_t = t
+	local frequency_lerp_clamp = math.clamp(frequency_lerp ^ 2, 0, 1)
+	local chance = math.lerp(0.01, 0.1, frequency_lerp_clamp)
+	if chance < math.random() then
+		return
+	end
 
-    if math_lerp(0.01, 0.1, math_min(frequency_lerp ^ 2, 1)) < math_random() then
-        return
-    end
+	self._teamAI_last_combat_chatter_t = self._t
 
-    unit:sound():say("g90", true, true)
+	unit:sound():say("g90", true, true)
 end
 
 -- Fix stale neighbours entries when creating AI Areas
