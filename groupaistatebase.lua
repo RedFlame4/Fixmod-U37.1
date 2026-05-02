@@ -48,17 +48,6 @@ function GroupAIStateBase:chk_say_teamAI_combat_chatter(unit)
     unit:sound():say("g90", true, true)
 end
 
-function GroupAIStateBase:is_nav_seg_safe(nav_seg)
-	local areas = self:get_areas_from_nav_seg_id(nav_seg)
-	for _, area in pairs(areas) do
-		if not self:is_area_safe(area) then
-			return false
-		end
-	end
-
-	return true
-end
-
 -- Fix stale neighbours entries when creating AI Areas
 -- The function only modifies bidirectional neighbours to point to the newly created area
 -- Leaving stale neighbours entries if there was an existing one-way link due to navlinks
