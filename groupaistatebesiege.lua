@@ -555,8 +555,9 @@ function GroupAIStateBesiege:_set_assault_objective_to_group(group, phase)
 			else
 				assault_area = found_areas[assault_area]
 
-				-- Flank is already calculated to one navseg before target segment
-				if #assault_path > 2 and assault_area.nav_segs[assault_path[#assault_path - 1][1]] then
+				-- Flank is already calculated to one area before target area
+				-- _merge_coarse_path_by_area should already render a while loop unneeded
+				while #assault_path > 2 and assault_area.nav_segs[assault_path[#assault_path - 1][1]] do
 					table_remove(assault_path)
 				end
 			end

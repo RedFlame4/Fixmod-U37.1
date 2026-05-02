@@ -48,15 +48,38 @@ function GroupAIStateBase:chk_say_teamAI_combat_chatter(unit)
     unit:sound():say("g90", true, true)
 end
 
---[[function GroupAIStateBase:is_nav_seg_safe(nav_seg)
-	for _, criminal_data in pairs(self._char_criminals) do
-		if criminal_data.tracker:nav_segment() == nav_seg then -- so coarse paths don't fail if they have to go through 2 navsegments that are part of the same area, with criminals inside
+function GroupAIStateBase:is_nav_seg_safe(nav_seg)
+	local areas = self:get_areas_from_nav_seg_id(nav_seg)
+	for _, area in pairs(areas) do
+		if not self:is_area_safe(area) then
 			return false
 		end
 	end
 
 	return true
 end
+
+-- Fix stale neighbours entries when creating AI Areas
+-- The function only modifies bidirectional neighbours to point to the newly created area
+-- Leaving stale neighbours entries if there was an existing one-way link due to navlinks
+Hooks:PostHook(GroupAIStateBase, "add_area", "fixmod_add_area", function(self, area_id, nav_segs)
+	local new_area = self._area_data[area_id]
+	if not new_area then
+		return
+	end
+
+	local all_nav_segs = managers.navigation._nav_segments
+	for _, seg_id in ipairs(nav_segs) do
+		local nav_seg = all_nav_segs[seg_id]
+		if nav_seg and not nav_seg.disabled then
+			for other_seg_id, other_nav_seg in pairs(all_nav_segs) do
+				if not other_nav_seg.disabled and not new_area.nav_segs[other_seg_id] and other_nav_seg.neighbours[seg_id] and not nav_seg.neighbours[other_seg_id] then -- recompute one-directional links
+					self:on_nav_seg_neighbour_state(other_seg_id, seg_id, true)
+				end
+			end
+		end
+	end
+end)
 
 -- Last area is never set in vanilla so this doesn't do anything
 -- Removes entries in a coarse path sharing an area
@@ -75,4 +98,4 @@ function GroupAIStateBase:_merge_coarse_path_by_area(coarse_path)
 
 		i_nav_seg = i_nav_seg - 1
 	end
-end--]]
+end
